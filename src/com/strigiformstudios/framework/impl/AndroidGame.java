@@ -8,12 +8,12 @@ import com.strigiformstudios.framework.Input;
 import com.strigiformstudios.framework.Screen;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Window;
 import android.view.WindowManager;
@@ -29,6 +29,7 @@ public abstract class AndroidGame extends Activity implements Game {
 	Screen screen;
 	WakeLock wakeLock;
 
+	@SuppressWarnings("deprecation") //getWidth() and getHeight() deprecation handled appropriately (I hope)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -37,16 +38,29 @@ public abstract class AndroidGame extends Activity implements Game {
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-		boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-		int frameBufferWidth = isLandscape ? 480 : 320;
-		int frameBufferHeight = isLandscape ? 320 : 480;
+		boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+		int frameBufferWidth = isPortrait ? 640 : 480;
+		int frameBufferHeight = isPortrait ? 480 : 640;
 		Bitmap frameBuffer = Bitmap.createBitmap(frameBufferWidth,
 				frameBufferHeight, Config.RGB_565);
-
-		float scaleX = (float) frameBufferWidth
-				/ getWindowManager().getDefaultDisplay().getWidth();
-		float scaleY = (float) frameBufferHeight
-				/ getWindowManager().getDefaultDisplay().getHeight();
+		
+		float scaleX;
+		float scaleY;
+		
+		//added this check because of deprecated methods
+		if(Build.VERSION.SDK_INT < 13){
+			scaleX = (float) frameBufferWidth
+					/ getWindowManager().getDefaultDisplay().getWidth();
+			scaleY = (float) frameBufferHeight
+					/ getWindowManager().getDefaultDisplay().getHeight();
+		}
+		else{
+			Point screenSize = new Point();
+			scaleX = (float) frameBufferWidth
+					/ screenSize.x;
+			scaleY = (float) frameBufferHeight
+					/ screenSize.y;
+		}
 
 		renderView = new AndroidFastRenderView(this, frameBuffer);
 		graphics = new AndroidGraphics(getAssets(), frameBuffer);
@@ -56,9 +70,7 @@ public abstract class AndroidGame extends Activity implements Game {
 		screen = getStartScreen();
 		setContentView(renderView);
 
-		PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK,
-				"GLGame");
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
 	@Override
