@@ -1,13 +1,15 @@
 package com.strigiformstudios.splash;
 
-import android.app.Activity;
-import android.os.Bundle;
+import com.strigiformstudios.framework.Screen;
+import com.strigiformstudios.framework.impl.AndroidGame;
 
-public class SplashGame extends Activity{
+//extending AndroidGame makes this class an activity. It's the launcher activity in the manifest,
+//so it's onCreate method is called automatically (this is an inherited method)
+public class SplashGame extends AndroidGame{
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+	public Screen getStartScreen() {
+		return new LoadingScreen(this);
 	}
+
 
 }
